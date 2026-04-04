@@ -3,6 +3,7 @@ import {
   createTaskSchema,
   deleteTaskSchema,
   markCompleteSchema,
+  updateTaskSchema,
 } from "../schemas/task.schema";
 import { TaskModel } from "../models/task.model";
 import { CategoryModel } from "../models/category.model";
@@ -116,19 +117,24 @@ export const markComplete = async (req: Request, res: Response) => {
       });
     }
 
-    const updatedTask = await TaskModel.findOneAndUpdate(
-      { _id: taskId, userId: userId },
-      {
-        isCompleted: true,
-      },
-    );
+    const task = await TaskModel.findOne({ _id: taskId, userId });
 
-    if (!updatedTask) {
+    if (!task) {
       return res.status(404).json({
         success: false,
         message: "Task not found",
       });
     }
+
+    if (task.isCompleted) {
+      return res.status(400).json({
+        success: false,
+        message: "Task is already completed",
+      });
+    }
+
+    task.isCompleted = true;
+    await task.save();
 
     return res.status(200).json({
       success: true,
@@ -164,7 +170,7 @@ export const deleteTask = async (req: Request, res: Response) => {
       });
     }
 
-    const deletedTask = await TaskModel.deleteOne({
+    const deletedTask = await TaskModel.findOneAndDelete({
       _id: taskId,
       userId,
     });
@@ -184,6 +190,62 @@ export const deleteTask = async (req: Request, res: Response) => {
     return res.status(500).json({
       success: false,
       message: "Something went wrong while deleting the task",
+    });
+  }
+};
+
+export const editTask = async (req: Request, res: Response) => {
+  try {
+    const { success, data, error } = updateTaskSchema.safeParse(req.body);
+
+    if (!success) {
+      return res.status(400).json({
+        success: false,
+        message: error.flatten(),
+      });
+    }
+    const { taskId } = req.params;
+    const userId = req.userId;
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized",
+      });
+    }
+
+    const { title, description, categoryId, dueDate, isCompleted } = data;
+
+    const updatedTask = await TaskModel.findOneAndUpdate(
+      { _id: taskId, userId },
+      {
+        $set: {
+          ...(title !== undefined && { title }),
+          ...(description !== undefined && { description }),
+          ...(dueDate !== undefined && { dueDate }),
+          ...(isCompleted !== undefined && { isCompleted }),
+          ...(categoryId !== undefined && { category: categoryId }),
+        },
+      },
+      { new: true },
+    );
+
+    if (!updatedTask) {
+      return res.status(404).json({
+        success: false,
+        message: "Task not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Task updated successfully",
+      data: updatedTask,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Something went wrong while editing the task",
     });
   }
 };

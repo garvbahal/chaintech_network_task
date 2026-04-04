@@ -14,3 +14,11 @@ export const markCompleteSchema = z.object({
 export const deleteTaskSchema = z.object({
   taskId: z.string().min(1, "taskId is required"),
 });
+
+export const updateTaskSchema = z.object({
+  title: z.string().min(1).optional(),
+  description: z.string().min(1).optional(),
+  dueDate: z.coerce.date().optional(),
+  categoryId: z.string().optional(),
+  isCompleted: z.boolean().optional(),
+});
