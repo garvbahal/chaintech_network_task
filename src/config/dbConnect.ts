@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
-
+import dotenv from "dotenv";
+dotenv.config();
 const dbUri = process.env.MONGO_URI;
 
 if (!dbUri) {
@@ -14,6 +15,7 @@ export const dbConnect = () => {
     })
     .catch((error) => {
       console.log("DB connection not successfull");
+      console.log(error);
       process.exit(1);
     });
 };

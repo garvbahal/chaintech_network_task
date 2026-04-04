@@ -22,3 +22,7 @@ export const updateTaskSchema = z.object({
   categoryId: z.string().optional(),
   isCompleted: z.boolean().optional(),
 });
+
+export const createCategorySchema = z.object({
+  categoryName: z.string().trim().min(1, "Category name is required"),
+});

@@ -1,12 +1,13 @@
 import type { Request, Response } from "express";
 import {
+  createCategorySchema,
   createTaskSchema,
   deleteTaskSchema,
   markCompleteSchema,
   updateTaskSchema,
-} from "../schemas/task.schema";
-import { TaskModel } from "../models/task.model";
-import { CategoryModel } from "../models/category.model";
+} from "../schemas/task.schema.js";
+import { TaskModel } from "../models/task.model.js";
+import { CategoryModel } from "../models/category.model.js";
 
 export const createTask = async (req: Request, res: Response) => {
   try {
@@ -246,6 +247,56 @@ export const editTask = async (req: Request, res: Response) => {
     return res.status(500).json({
       success: false,
       message: "Something went wrong while editing the task",
+    });
+  }
+};
+
+export const createCategory = async (req: Request, res: Response) => {
+  try {
+    const { success, data, error } = createCategorySchema.safeParse(req.body);
+
+    if (!success) {
+      return res.status(400).json({
+        success: false,
+        message: error.flatten(),
+      });
+    }
+
+    const { categoryName } = data;
+    const userId = req.userId;
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized",
+      });
+    }
+
+    const categoryExists = await CategoryModel.findOne({
+      categoryName,
+      createdBy: userId,
+    });
+
+    if (categoryExists) {
+      return res.status(400).json({
+        success: false,
+        message: "Category already exists",
+      });
+    }
+
+    await CategoryModel.create({
+      categoryName,
+      createdBy: userId,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Category created successfully",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Something went wrong while creating the category",
     });
   }
 };

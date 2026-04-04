@@ -1,8 +1,10 @@
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import type { Request, Response } from "express";
-import { loginSchema, signupSchema } from "../schemas/auth.schema";
-import { UserModel } from "../models/user.model";
+import { loginSchema, signupSchema } from "../schemas/auth.schema.js";
+import { UserModel } from "../models/user.model.js";
+import dotenv from "dotenv";
+dotenv.config();
 
 const jwtSecret = process.env.JWT_SECRET;
 
